@@ -876,7 +876,7 @@ def main():
 
     # Create memory manager and restore data
     global MEMORY_MANAGER
-    MEMORY_MANAGER = create_memory_manager("ThreeLevelCache")   # "FullRam" | "ThreeLevelCache"
+    MEMORY_MANAGER = create_memory_manager("FullRam")   # "FullRam" | "ThreeLevelCache"
     MEMORY_MANAGER.load_db()
 
     # Create the EventHandler and pass it your bot's token
