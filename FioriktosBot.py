@@ -96,8 +96,8 @@ GDPR = "To work correctly, I need to store these information for each chat:" + \
        "\n- /gdpr tx : If you want to copy the memory of chat A into chat B, issue this command in chat A. You will receive a code to send inside chat B to complete the transfer." + \
        "\nFor more information, visit https://www.github.com/FiorixF1/fioriktos-bot.git or contact my developer @FiorixF1."
 
-WELCOME = "Hi! I am Fioriktos and I can learn how to speak! You can interact with me using the following commands:" + \
-          "\n- /fioriktos : Let me generate a message" + \
+WELCOME = "Hi! I am Pascal and I can learn how to speak! You can interact with me using the following commands:" + \
+          "\n- /pascal : Let me generate a message" + \
           "\n- /sticker : Let me send a sticker" + \
           "\n- /gif : Let me send a gif" + \
           "\n- /audio : Let me send an audio" + \
@@ -634,7 +634,7 @@ def help(update, context):
 
 @serializer
 @chat_finder
-def fioriktos(update, context, chat):
+def pascal(update, context, chat):
     reply = chat.talk()
     if reply != "":
         context.bot.send_message(chat_id=update.message.chat_id, text=reply)
@@ -888,7 +888,7 @@ def main():
     # on different commands - answer in Telegram
     dp.add_handler(CommandHandler("start", start))
     dp.add_handler(CommandHandler("help", help))
-    dp.add_handler(CommandHandler("fioriktos", fioriktos))
+    dp.add_handler(CommandHandler("pascal", pascal))
     dp.add_handler(CommandHandler("sticker", choose_sticker))
     dp.add_handler(CommandHandler("gif", choose_animation))
     dp.add_handler(CommandHandler("audio", choose_audio))
