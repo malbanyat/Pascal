@@ -47,7 +47,7 @@ TO_KEY                    = lambda chat_id: PREFIX + str(chat_id) + ".txt"
 CHAT_MAX_DURATION         = 7776000   # seconds in three months
 CHAT_UPDATE_TIMEOUT       = 666       # 37 % of 30 minutes
 SUCCESSOR_LIST_MAX_LENGTH = 256
-WORD_LIST_MAX_LENGTH      = 16384
+WORD_LIST_MAX_LENGTH      = 32768
 MEDIA_LIST_MAX_LENGTH     = 1024
 
 LANG_TO_VOICE = {
@@ -59,7 +59,7 @@ LANG_TO_VOICE = {
     'cy':    'Gwyneth',
     'da':    'Mads',
     'de':    'Hans',
-    'en':    'Joey',
+    'en':    'Giorgio',
     'es':    'Miguel',
     'fa':    'Zeina',    # redirect Farsi to Arabic
     'fr':    'Mathieu',
@@ -100,14 +100,14 @@ GDPR = "To work correctly, I need to store these information for each chat:" + \
        "\n- /gdpr flag : Reply to a sticker or a gif with this command to remove it from my memory. This is useful to prevent me from spamming inappropriate content." + \
        "\n- /gdpr unflag : Allow me to learn a sticker or gif that was previously flagged." + \
        "\n- /gdpr tx : If you want to copy the memory of chat A into chat B, issue this command in chat A. You will receive a code to send inside chat B to complete the transfer." + \
-       "\nFor more information, visit https://www.github.com/FiorixF1/fioriktos-bot.git or contact my developer @FiorixF1."
+       "\nFor more information, visit https://github.com/malbanyat/Pascal or contact my developer @malbanyat or my real developer @FiorixF1."
 
 WELCOME = "Hi! I am Pascal and I can learn how to speak! You can interact with me using the following commands:" + \
           "\n- /pascal : Let me generate a message" + \
           "\n- /sticker : Let me send a sticker" + \
           "\n- /gif : Let me send a gif" + \
           "\n- /audio : Let me send an audio" + \
-          "\n- /torrent n : Let me reply automatically to messages sent by others. The parameter n sets how much talkative I am and it must be a number between 0 and 10: with /torrent 10 I will answer all messages, while /torrent 0 will mute me." + \
+          "\n- /bley n : Let me reply automatically to messages sent by others. The parameter n sets how much talkative I am and it must be a number between 0 and 10: with /bley 10 I will answer all messages, while /bley 0 will mute me." + \
           "\n- You can enable or disable my learning ability with the commands /enablelearning and /disablelearning" + \
           "\n- /thanos : This command will delete half the memory of the chat. Use it wisely!" + \
           "\n- /bof : If I say something funny, you can make a screenshot and send it with this command in the description. Your screenshot could get published on @BestOfFioriktos. In case of an audio message, just reply to it with /bof" + \
@@ -134,9 +134,9 @@ class MemoryManagerFullRam:
             chat = Chat()
             self.chats[chat_id] = chat
         chat.last_update = time.time()
-        
+
         logger.info("RAM: {} - DISK: N/A - NETWORK: N/A".format(len(self.chats)))
-        
+
         return chat
 
     def synchronize(self):
@@ -180,7 +180,7 @@ class MemoryManagerFullRam:
             jsonized_chat = json.loads(chats_tmp[chat_id])
 
             deserialized_chat = Chat()
-            deserialized_chat.torrent_level = jsonized_chat.get("torrent_level", 5)
+            deserialized_chat.bley_level = jsonized_chat.get("bley_level", 5)
             deserialized_chat.is_learning = jsonized_chat.get("is_learning", True)
             deserialized_chat.model = jsonized_chat.get("model", { BEGIN: [END] })
             deserialized_chat.stickers = jsonized_chat.get("stickers", [])
@@ -223,14 +223,14 @@ class MemoryManagerFullRam:
 
         tx = self.chats[tx_chat_id]
         rx = Chat()
-        rx.torrent_level = tx.torrent_level
+        rx.bley_level = tx.bley_level
         rx.is_learning   = tx.is_learning
         rx.model         = {key: value[:] for key, value in tx.model.items()}
         rx.stickers      = tx.stickers[:]
         rx.animations    = tx.animations[:]
         rx.flagged_media = tx.flagged_media.copy()
         rx.last_update   = tx.last_update
-        
+
         self.chats[rx_chat_id] = rx
         del self.OTPs[OTP]
         return True
@@ -264,11 +264,11 @@ class MemoryManagerThreeLevelCache:
             self.chats[chat_id] = chat
         else:
             chat = Chat()
-            self.chats[chat_id] = chat 
+            self.chats[chat_id] = chat
         chat.last_update = time.time()
 
         logger.info("RAM: {} - DISK: {} - NETWORK: {}".format(len(self.chats), len(self.disk_chats), len(self.network_chats)))
-        
+
         return chat
 
     def synchronize(self):
@@ -282,8 +282,8 @@ class MemoryManagerThreeLevelCache:
     def load_db(self):
         try:
             s3_client = boto3.client("s3", aws_access_key_id=AWS_ACCESS_KEY_ID, aws_secret_access_key=AWS_SECRET_ACCESS_KEY, region_name=REGION_NAME)
-            chats_aws = s3_client.list_objects(Bucket=S3_BUCKET_NAME, Prefix=PREFIX)["Contents"][1:]    
-            
+            chats_aws = s3_client.list_objects(Bucket=S3_BUCKET_NAME, Prefix=PREFIX)["Contents"][1:]
+
             now = time.time()
             for chat_aws in chats_aws:
                 if now - chat_aws["LastModified"].timestamp() > CHAT_MAX_DURATION:
@@ -308,7 +308,7 @@ class MemoryManagerThreeLevelCache:
         for chat_id in self.chats:
             current_chat = self.chats[chat_id]
             chat_key = TO_KEY(chat_id)
-            
+
             if current_chat.dirty_bit:
                 data = self.jsonify(current_chat)
                 s3_client.put_object(Body=data.encode(), Bucket=S3_BUCKET_NAME, Key=chat_key)
@@ -332,7 +332,7 @@ class MemoryManagerThreeLevelCache:
         jsonized_chat = json.loads(data)
 
         deserialized_chat = Chat()
-        deserialized_chat.torrent_level = jsonized_chat.get("torrent_level", 5)
+        deserialized_chat.bley_level = jsonized_chat.get("bley_level", 5)
         deserialized_chat.is_learning = jsonized_chat.get("is_learning", True)
         deserialized_chat.model = jsonized_chat.get("model", { BEGIN: [END] })
         deserialized_chat.stickers = jsonized_chat.get("stickers", [])
@@ -381,14 +381,14 @@ class MemoryManagerThreeLevelCache:
 
         tx = self.chats[tx_chat_id]
         rx = Chat()
-        rx.torrent_level = tx.torrent_level
+        rx.bley_level = tx.bley_level
         rx.is_learning   = tx.is_learning
         rx.model         = {key: value[:] for key, value in tx.model.items()}
         rx.stickers      = tx.stickers[:]
         rx.animations    = tx.animations[:]
         rx.flagged_media = tx.flagged_media.copy()
         rx.last_update   = tx.last_update
-        
+
         self.chats[rx_chat_id] = rx
         del self.OTPs[OTP]
         return True
@@ -406,7 +406,7 @@ def create_memory_manager(name):
 """ This class handles the data for a single chat, including Fiorix chain generation """
 class Chat:
     def __init__(self):
-        self.torrent_level = 5
+        self.bley_level = 5
         self.is_learning = True
         self.model = { BEGIN: [END] }
         self.stickers = []
@@ -459,7 +459,7 @@ class Chat:
                 self.animations[guess] = animation
 
     def reply(self):
-        if random.random()*10 < self.torrent_level**2/10:
+        if random.random()*10 < self.bley_level**2/10:
             if random.random()*10 < 9.0:
                 return (MESSAGE, self.talk())
             else:
@@ -492,7 +492,7 @@ class Chat:
 
     def speech(self):
         text = self.talk()
-        
+
         try:
             candidates = langdetect.detect_langs(text)
             winner = random.choice(candidates).lang
@@ -500,7 +500,7 @@ class Chat:
         except Exception as e:
             # language detection unsuccessful or unsupported language
             logger.error("Exception occurred: {}".format(e))
-            # fallback to Italian
+            # fallbOK to Italian
             voice = LANG_TO_VOICE['it']
 
         polly_client = boto3.client("polly", aws_access_key_id=AWS_ACCESS_KEY_ID, aws_secret_access_key=AWS_SECRET_ACCESS_KEY, region_name=REGION_NAME)
@@ -529,12 +529,12 @@ class Chat:
         except:
             return ""
 
-    def set_torrent(self, new_level):
+    def set_bley(self, new_level):
         if new_level >= 0 and new_level <= 10:
-            self.torrent_level = new_level
+            self.bley_level = new_level
 
-    def get_torrent(self):
-        return self.torrent_level
+    def get_bley(self):
+        return self.bley_level
 
     def enable_learning(self):
         self.is_learning = True
@@ -591,7 +591,7 @@ class Chat:
         return ''.join(filter(lambda ch: ch.isalnum(), word)).lower()
 
     def __str__(self):
-        jsonification = {"torrent_level": self.torrent_level,
+        jsonification = {"bley_level": self.bley_level,
                          "is_learning": self.is_learning,
                          "model": self.model,
                          "stickers": self.stickers,
@@ -676,19 +676,19 @@ def choose_audio(update, context, chat):
 
 @serializer
 @chat_finder
-def torrent(update, context, chat):
+def bley(update, context, chat):
     if len(context.args) == 0:
-        context.bot.send_message(chat_id=update.message.chat_id, text="Torrent level is {}\n\nChange with /torrent followed by a number between 0 and 10.".format(chat.get_torrent()))
+        context.bot.send_message(chat_id=update.message.chat_id, text="bley level is {}\n\nChange with /bley followed by a number between 0 and 10.".format(chat.get_bley()))
     else:
         try:
             quantity = int(context.args[0])
             if quantity < 0 or quantity > 10:
-                context.bot.send_message(chat_id=update.message.chat_id, text="NAK // Send /torrent with a number between 0 and 10.")
+                context.bot.send_message(chat_id=update.message.chat_id, text="NAK // Send /bley with a number between 0 and 10.")
             else:
-                chat.set_torrent(quantity)
-                context.bot.send_message(chat_id=update.message.chat_id, text="ACK")
+                chat.set_bley(quantity)
+                context.bot.send_message(chat_id=update.message.chat_id, text="Ok")
         except:
-            context.bot.send_message(chat_id=update.message.chat_id, text="NAK // Send /torrent with a number between 0 and 10.")
+            context.bot.send_message(chat_id=update.message.chat_id, text="NAK // Send /bley with a number between 0 and 10.")
 
 @serializer
 @chat_finder
@@ -715,15 +715,15 @@ def thanos(update, context, chat):
                                                                                                                                                                                                                                             len(str(chat).encode())))
             context.bot.send_message(chat_id=update.message.chat_id, text="/thanos {}".format(expected))
         else:
-            context.bot.send_message(chat_id=update.message.chat_id, text="ACK // Let's do some cleaning!")
+            context.bot.send_message(chat_id=update.message.chat_id, text="OK // Let's do some cleaning!")
             time.sleep(3)
-            context.bot.send_animation(chat_id=update.message.chat_id, animation=open('thanos.mp4', 'rb'))            
-            
+            context.bot.send_animation(chat_id=update.message.chat_id, animation=open('thanos.mp4', 'rb'))
+
             # destroy half the chat
             chat.halve()
             # delete isolated words
             chat.clean()
-            
+
             time.sleep(6)
             context.bot.send_message(chat_id=update.message.chat_id, text="Now this chat contains {} words, {} stickers and {} gifs for a total size of {} bytes.".format(len(chat.model),
                                                                                                                                                                           len(chat.stickers),
@@ -739,15 +739,15 @@ def thanos(update, context, chat):
 def bof(update, context):
     if update.message.reply_to_message and update.message.reply_to_message.audio and update.message.reply_to_message.from_user.id == BOT_ID:
         context.bot.send_audio(chat_id=ADMIN, audio=update.message.reply_to_message.audio)
-        context.bot.send_message(chat_id=update.message.chat_id, text="ACK")
+        context.bot.send_message(chat_id=update.message.chat_id, text="OK")
     elif update.message.reply_to_message and update.message.reply_to_message.voice and update.message.reply_to_message.from_user.id == BOT_ID:
         context.bot.send_voice(chat_id=ADMIN, voice=update.message.reply_to_message.voice)
-        context.bot.send_message(chat_id=update.message.chat_id, text="ACK")
+        context.bot.send_message(chat_id=update.message.chat_id, text="OK")
     elif not update.message.photo:
         context.bot.send_message(chat_id=update.message.chat_id, text="NAK // Reply to an audio message with /bof or send a screenshot with /bof in the description, you could get published on @BestOfFioriktos")
     elif update.message.caption and ("/bof" in update.message.caption or "/bestoffioriktos" in update.message.caption):
         context.bot.send_photo(chat_id=ADMIN, photo=update.message.photo[-1])
-        context.bot.send_message(chat_id=update.message.chat_id, text="ACK")
+        context.bot.send_message(chat_id=update.message.chat_id, text="OK")
 
 @serializer
 @chat_finder
@@ -780,7 +780,7 @@ def gdpr(update, context, chat):
             context.bot.send_document(chat_id=update.message.chat_id, document=open(filename, "rb"))
         elif command == "delete":
             MEMORY_MANAGER.delete_chat(update.message.chat_id)
-            context.bot.send_message(chat_id=update.message.chat_id, text="ACK")
+            context.bot.send_message(chat_id=update.message.chat_id, text="OK")
         elif command == "flag":
             chat_id = update.message.chat_id
             user_id = update.message.from_user.id
@@ -803,7 +803,7 @@ def gdpr(update, context, chat):
                     if myself["status"] == "administrator" and myself["can_delete_messages"]:
                         context.bot.delete_message(chat_id, update.message.reply_to_message.message_id)
                     # done
-                    context.bot.send_message(chat_id=chat_id, text="ACK")
+                    context.bot.send_message(chat_id=chat_id, text="OK")
                 else:
                     context.bot.send_message(chat_id=chat_id, text="NAK // Reply to a sticker or a gif with /gdpr flag")
             else:
@@ -824,14 +824,14 @@ def gdpr(update, context, chat):
                     # update bot memory
                     chat.unflag(unique_id)
                     # done
-                    context.bot.send_message(chat_id=chat_id, text="ACK")
+                    context.bot.send_message(chat_id=chat_id, text="OK")
                 else:
                     context.bot.send_message(chat_id=chat_id, text="NAK // Reply to a sticker or a gif with /gdpr unflag")
             else:
                 context.bot.send_message(chat_id=chat_id, text="NAK // Command available only for admins")
         elif command == "tx":
             OTP = MEMORY_MANAGER.transmit_chat(update.message.chat_id)
-            context.bot.send_message(chat_id=update.message.chat_id, text="ACK // Send this command in the target group to copy there the memory of this chat. This code will expire after 5 minutes.")
+            context.bot.send_message(chat_id=update.message.chat_id, text="OK // Send this command in the target group to copy there the memory of this chat. This code will expire after 5 minutes.")
             context.bot.send_message(chat_id=update.message.chat_id, text="/gdpr rx {}".format(OTP))
         elif command == "rx":
             if len(context.args) < 2:
@@ -839,7 +839,7 @@ def gdpr(update, context, chat):
             else:
                 OTP = context.args[1]
                 if MEMORY_MANAGER.receive_chat(update.message.chat_id, OTP):
-                    context.bot.send_message(chat_id=update.message.chat_id, text="ACK")
+                    context.bot.send_message(chat_id=update.message.chat_id, text="OK")
                 else:
                     context.bot.send_message(chat_id=update.message.chat_id, text="NAK // Unknown or expired code")
         else:
@@ -898,7 +898,7 @@ def main():
     dp.add_handler(CommandHandler("sticker", choose_sticker))
     dp.add_handler(CommandHandler("gif", choose_animation))
     dp.add_handler(CommandHandler("audio", choose_audio))
-    dp.add_handler(CommandHandler("torrent", torrent))
+    dp.add_handler(CommandHandler("bley", bley))
     dp.add_handler(CommandHandler("enablelearning", enable_learning))
     dp.add_handler(CommandHandler("disablelearning", disable_learning))
     dp.add_handler(CommandHandler("thanos", thanos))
@@ -912,7 +912,7 @@ def main():
     dp.add_handler(MessageHandler(Filters.animation, learn_animation_and_reply))
     dp.add_handler(MessageHandler(Filters.photo, bof))
     dp.add_handler(MessageHandler(Filters.status_update.new_chat_members, welcome))
-    
+
     # log all errors
     dp.add_error_handler(error)
 
