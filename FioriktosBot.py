@@ -745,7 +745,7 @@ def bof(update, context):
         context.bot.send_message(chat_id=update.message.chat_id, text="OK")
     elif not update.message.photo:
         context.bot.send_message(chat_id=update.message.chat_id, text="Nope // Reply to an audio message with /fioridex or send a screenshot with /fioridex in the description, the message will get published on @fioridex")
-    elif update.message.caption and ("/bof" in update.message.caption or "/bestoffioriktos" in update.message.caption):
+    elif update.message.caption and ("/fioridex" in update.message.caption or "/bestofpascal" in update.message.caption):
         context.bot.send_photo(chat_id=-1001222247728, photo=update.message.photo[-1])
         context.bot.send_message(chat_id=update.message.chat_id, text="OK")
 
