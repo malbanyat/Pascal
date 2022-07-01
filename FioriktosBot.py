@@ -110,7 +110,7 @@ WELCOME = "Hi! I am Pascal and I can learn how to speak! You can interact with m
           "\n- /bley n : Let me reply automatically to messages sent by others. The parameter n sets how much talkative I am and it must be a number between 0 and 10: with /bley 10 I will answer all messages, while /bley 0 will mute me." + \
           "\n- You can enable or disable my learning ability with the commands /enablelearning and /disablelearning" + \
           "\n- /thanos : This command will delete half the memory of the chat. Use it wisely!" + \
-          "\n- /bof : If I say something funny, you can make a screenshot and send it with this command in the description. Your screenshot could get published on @BestOfFioriktos. In case of an audio message, just reply to it with /bof" + \
+          "\n- /fioridex : If I say something funny, you can make a screenshot and send it with this command in the description. Your screenshot will get published on @fioridex. In case of an audio message, just reply to it with /fioridex" + \
           "\n- /gdpr : Here you can have more info about privacy, special commands and visit my source code 💻"
 
 
@@ -744,7 +744,7 @@ def bof(update, context):
         context.bot.send_voice(chat_id=-1001222247728, voice=update.message.reply_to_message.voice)
         context.bot.send_message(chat_id=update.message.chat_id, text="OK")
     elif not update.message.photo:
-        context.bot.send_message(chat_id=update.message.chat_id, text="Nope // Reply to an audio message with /fioridex or send a screenshot with /fioridex in the description, you could get published on @fioridex")
+        context.bot.send_message(chat_id=update.message.chat_id, text="Nope // Reply to an audio message with /fioridex or send a screenshot with /fioridex in the description, the message will get published on @fioridex")
     elif update.message.caption and ("/bof" in update.message.caption or "/bestoffioriktos" in update.message.caption):
         context.bot.send_photo(chat_id=-1001222247728, photo=update.message.photo[-1])
         context.bot.send_message(chat_id=update.message.chat_id, text="OK")
@@ -902,8 +902,8 @@ def main():
     dp.add_handler(CommandHandler("enablelearning", enable_learning))
     dp.add_handler(CommandHandler("disablelearning", disable_learning))
     dp.add_handler(CommandHandler("thanos", thanos))
-    dp.add_handler(CommandHandler("bof", bof))
-    dp.add_handler(CommandHandler("bestoffioriktos", bof))
+    dp.add_handler(CommandHandler("fioridex", bof))
+    dp.add_handler(CommandHandler("bestofpascal", bof))
     dp.add_handler(CommandHandler("gdpr", gdpr))
 
     # on noncommand i.e. message
