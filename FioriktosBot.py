@@ -738,15 +738,15 @@ def thanos(update, context, chat):
 
 def bof(update, context):
     if update.message.reply_to_message and update.message.reply_to_message.audio and update.message.reply_to_message.from_user.id == BOT_ID:
-        context.bot.send_audio(chat_id=ADMIN, audio=update.message.reply_to_message.audio)
+        context.bot.send_audio(chat_id=-1001222247728, audio=update.message.reply_to_message.audio)
         context.bot.send_message(chat_id=update.message.chat_id, text="OK")
     elif update.message.reply_to_message and update.message.reply_to_message.voice and update.message.reply_to_message.from_user.id == BOT_ID:
-        context.bot.send_voice(chat_id=ADMIN, voice=update.message.reply_to_message.voice)
+        context.bot.send_voice(chat_id=-1001222247728, voice=update.message.reply_to_message.voice)
         context.bot.send_message(chat_id=update.message.chat_id, text="OK")
     elif not update.message.photo:
-        context.bot.send_message(chat_id=update.message.chat_id, text="NAK // Reply to an audio message with /bof or send a screenshot with /bof in the description, you could get published on @BestOfFioriktos")
+        context.bot.send_message(chat_id=update.message.chat_id, text="Nope // Reply to an audio message with /fioridex or send a screenshot with /fioridex in the description, you could get published on @fioridex")
     elif update.message.caption and ("/bof" in update.message.caption or "/bestoffioriktos" in update.message.caption):
-        context.bot.send_photo(chat_id=ADMIN, photo=update.message.photo[-1])
+        context.bot.send_photo(chat_id=-1001222247728, photo=update.message.photo[-1])
         context.bot.send_message(chat_id=update.message.chat_id, text="OK")
 
 @serializer
